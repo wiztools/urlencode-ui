@@ -4,7 +4,7 @@
   <groupId>org.wiztools.util</groupId>
   <artifactId>urlencode-ui</artifactId>
   <packaging>jar</packaging>
-  <version>1.0</version>
+  <version>1.1-SNAPSHOT</version>
   <name>URLEncode UI</name>
   <url>http://maven.apache.org</url>
   <build>
