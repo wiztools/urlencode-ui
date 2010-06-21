@@ -3,6 +3,11 @@ package org.wiztools.util;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.FlowLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.UnsupportedEncodingException;
@@ -17,7 +22,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.WindowConstants;
 
-class URLEncodeFrame extends JFrame {
+class URLEncodeFrame extends JFrame implements ClipboardOwner {
 
     private static final int JTA_WIDTH = 40;
     private static final int JTA_HEIGHT = 10;
@@ -27,7 +32,7 @@ class URLEncodeFrame extends JFrame {
     private JTextArea jta_in = new JTextArea(JTA_HEIGHT, JTA_WIDTH);
     private JTextArea jta_out = new JTextArea(JTA_HEIGHT, JTA_WIDTH);
 
-    private JButton jb_encode = new JButton("Encode");
+    private JButton jb_encode = new JButton("Encode & Copy");
     private JButton jb_decode = new JButton("Decode");
 
     private final URLEncodeFrame me;
@@ -83,6 +88,10 @@ class URLEncodeFrame extends JFrame {
                 try{
                     String outTxt = URLEncoder.encode(inTxt, "UTF-8");
                     jta_out.setText(outTxt);
+
+                    // Now copy to clipboard:
+                    Toolkit.getDefaultToolkit().getSystemClipboard()
+                        .setContents(new StringSelection(outTxt), me);
                 }
                 catch(UnsupportedEncodingException ex){
                     assert true: "Will not come here.";
@@ -117,5 +126,9 @@ class URLEncodeFrame extends JFrame {
         this.pack();
         this.setLocationRelativeTo(null);
         this.setVisible(true);
+    }
+
+    public void lostOwnership(Clipboard clipboard, Transferable contents) {
+        // do nothing!
     }
 }
