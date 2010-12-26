@@ -13,14 +13,22 @@ import java.awt.event.ActionListener;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 class URLEncodeFrame extends JFrame implements ClipboardOwner {
 
@@ -32,8 +40,13 @@ class URLEncodeFrame extends JFrame implements ClipboardOwner {
     private JTextArea jta_in = new JTextArea(JTA_HEIGHT, JTA_WIDTH);
     private JTextArea jta_out = new JTextArea(JTA_HEIGHT, JTA_WIDTH);
 
-    private JButton jb_encode = new JButton("Encode & Copy");
+    private JButton jb_encode = new JButton("Encode");
     private JButton jb_decode = new JButton("Decode");
+
+    private JComboBox jcb_encoding = new JComboBox(
+            Charset.availableCharsets().values().toArray());
+
+    private boolean copyToClipboard = false; // default false
 
     private final URLEncodeFrame me;
 
@@ -51,6 +64,9 @@ class URLEncodeFrame extends JFrame implements ClipboardOwner {
         JPanel jp_south = new JPanel();
         jp_south.setLayout(new FlowLayout(FlowLayout.CENTER));
 
+        jcb_encoding.setSelectedItem(Charset.forName("UTF-8"));
+
+        jp_south.add(jcb_encoding);
         jp_south.add(jb_encode);
         jp_south.add(jb_decode);
 
@@ -77,6 +93,38 @@ class URLEncodeFrame extends JFrame implements ClipboardOwner {
 
         me = this;
 
+        JMenuBar jmb = new JMenuBar();
+        { // File Menu
+            JMenu jmFile = new JMenu("File");
+            jmFile.setMnemonic('f');
+            JMenuItem jmiExit = new JMenuItem("Exit");
+            jmiExit.setMnemonic('x');
+            jmiExit.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    System.exit(0);
+                }
+            });
+            jmFile.add(jmiExit);
+            jmb.add(jmFile);
+        }
+        { // Options Menu
+            JMenu jmOptions = new JMenu("Options");
+            jmOptions.setMnemonic('o');
+
+            final JCheckBoxMenuItem jmiCopyClipboardOutput =
+                    new JCheckBoxMenuItem("Copy output to clipboard after Encode/Decode");
+            jmiCopyClipboardOutput.setSelected(false); // default is not-selected!
+            jmiCopyClipboardOutput.addChangeListener(new ChangeListener() {
+                public void stateChanged(ChangeEvent e) {
+                    copyToClipboard = jmiCopyClipboardOutput.isSelected();
+                }
+            });
+            jmOptions.add(jmiCopyClipboardOutput);
+            jmb.add(jmOptions);
+        }
+
+        this.setJMenuBar(jmb);
+
         // init:
         jb_encode.setMnemonic('e');
         jb_decode.setMnemonic('d');
@@ -86,12 +134,15 @@ class URLEncodeFrame extends JFrame implements ClipboardOwner {
             public void actionPerformed(ActionEvent e) {
                 String inTxt = jta_in.getText();
                 try{
-                    String outTxt = URLEncoder.encode(inTxt, "UTF-8");
+                    String outTxt = URLEncoder.encode(inTxt,
+                            jcb_encoding.getSelectedItem().toString());
                     jta_out.setText(outTxt);
 
                     // Now copy to clipboard:
-                    Toolkit.getDefaultToolkit().getSystemClipboard()
-                        .setContents(new StringSelection(outTxt), me);
+                    if(copyToClipboard) {
+                        Toolkit.getDefaultToolkit().getSystemClipboard()
+                            .setContents(new StringSelection(outTxt), me);
+                    }
                 }
                 catch(UnsupportedEncodingException ex){
                     assert true: "Will not come here.";
@@ -103,14 +154,24 @@ class URLEncodeFrame extends JFrame implements ClipboardOwner {
             public void actionPerformed(ActionEvent e) {
                 String inTxt = jta_in.getText();
                 try{
-                    String outTxt = URLDecoder.decode(inTxt, "UTF-8");
+                    String outTxt = URLDecoder.decode(inTxt,
+                            jcb_encoding.getSelectedItem().toString());
                     jta_out.setText(outTxt);
+
+                    // Copy to clipboard:
+                    if(copyToClipboard) {
+                        Toolkit.getDefaultToolkit().getSystemClipboard()
+                            .setContents(new StringSelection(outTxt), me);
+                    }
                 }
                 catch(UnsupportedEncodingException ex){
                     assert true: "Will not come here.";
                 }
                 catch(IllegalArgumentException ex){
-                    JOptionPane.showMessageDialog(me, ex.getMessage(), "Error decoding", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(me,
+                            ex.getMessage(),
+                            "Error decoding",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
