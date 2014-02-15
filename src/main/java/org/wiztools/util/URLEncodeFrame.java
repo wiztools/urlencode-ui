@@ -10,10 +10,14 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
@@ -26,6 +30,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -37,16 +42,18 @@ class URLEncodeFrame extends JFrame implements ClipboardOwner {
 
     private static final int COMP_SPACING = 5;
 
-    private JTextArea jta_in = new JTextArea(JTA_HEIGHT, JTA_WIDTH);
-    private JTextArea jta_out = new JTextArea(JTA_HEIGHT, JTA_WIDTH);
+    private final JTextArea jta_in = new JTextArea(JTA_HEIGHT, JTA_WIDTH);
+    private final JTextArea jta_out = new JTextArea(JTA_HEIGHT, JTA_WIDTH);
 
-    private JButton jb_encode = new JButton("Encode");
-    private JButton jb_decode = new JButton("Decode");
+    private final JButton jb_encode = new JButton("Encode");
+    private final JButton jb_decode = new JButton("Decode");
 
-    private JComboBox jcb_encoding = new JComboBox(
+    private final JComboBox jcb_encoding = new JComboBox(
             Charset.availableCharsets().values().toArray());
 
     private boolean copyToClipboard = false; // default false
+    
+    private static final String COMMIT_ACTION = "commit";
 
     private final URLEncodeFrame me;
 
@@ -132,49 +139,33 @@ class URLEncodeFrame extends JFrame implements ClipboardOwner {
 
         jb_encode.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                String inTxt = jta_in.getText();
-                try{
-                    String outTxt = URLEncoder.encode(inTxt,
-                            jcb_encoding.getSelectedItem().toString());
-                    jta_out.setText(outTxt);
-
-                    // Now copy to clipboard:
-                    if(copyToClipboard) {
-                        Toolkit.getDefaultToolkit().getSystemClipboard()
-                            .setContents(new StringSelection(outTxt), me);
-                    }
-                }
-                catch(UnsupportedEncodingException ex){
-                    assert true: "Will not come here.";
-                }
+                encodeUrl();
             }
         });
 
         jb_decode.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                String inTxt = jta_in.getText();
-                try{
-                    String outTxt = URLDecoder.decode(inTxt,
-                            jcb_encoding.getSelectedItem().toString());
-                    jta_out.setText(outTxt);
-
-                    // Copy to clipboard:
-                    if(copyToClipboard) {
-                        Toolkit.getDefaultToolkit().getSystemClipboard()
-                            .setContents(new StringSelection(outTxt), me);
-                    }
-                }
-                catch(UnsupportedEncodingException ex){
-                    assert true: "Will not come here.";
-                }
-                catch(IllegalArgumentException ex){
-                    JOptionPane.showMessageDialog(me,
-                            ex.getMessage(),
-                            "Error decoding",
-                            JOptionPane.ERROR_MESSAGE);
-                }
+                decodeUrl();
             }
         });
+        
+        // Default button:
+        this.getRootPane().setDefaultButton(jb_encode);
+        
+        // Ctrl + Enter / Cmd + Enter to trigger Encode:
+        {
+            InputMap im = jta_in.getInputMap();
+            im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,
+                        Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()),
+                    COMMIT_ACTION);
+            ActionMap am = jta_in.getActionMap();
+            am.put(COMMIT_ACTION, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    encodeUrl();
+                }
+            });
+        }
 
         // Arrange content:
         Container c = getContentPane();
@@ -187,6 +178,48 @@ class URLEncodeFrame extends JFrame implements ClipboardOwner {
         this.pack();
         this.setLocationRelativeTo(null);
         this.setVisible(true);
+    }
+    
+    private void encodeUrl() {
+        String inTxt = jta_in.getText();
+        try{
+            String outTxt = URLEncoder.encode(inTxt,
+                    jcb_encoding.getSelectedItem().toString());
+            jta_out.setText(outTxt);
+
+            // Now copy to clipboard:
+            if(copyToClipboard) {
+                Toolkit.getDefaultToolkit().getSystemClipboard()
+                    .setContents(new StringSelection(outTxt), me);
+            }
+        }
+        catch(UnsupportedEncodingException ex){
+            assert true: "Will not come here.";
+        }
+    }
+    
+    private void decodeUrl() {
+        String inTxt = jta_in.getText();
+        try{
+            String outTxt = URLDecoder.decode(inTxt,
+                    jcb_encoding.getSelectedItem().toString());
+            jta_out.setText(outTxt);
+
+            // Copy to clipboard:
+            if(copyToClipboard) {
+                Toolkit.getDefaultToolkit().getSystemClipboard()
+                    .setContents(new StringSelection(outTxt), me);
+            }
+        }
+        catch(UnsupportedEncodingException ex){
+            assert true: "Will not come here.";
+        }
+        catch(IllegalArgumentException ex){
+            JOptionPane.showMessageDialog(me,
+                    ex.getMessage(),
+                    "Error decoding",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public void lostOwnership(Clipboard clipboard, Transferable contents) {
