@@ -6,19 +6,23 @@
     <packaging>jar</packaging>
     <version>1.2-SNAPSHOT</version>
     <name>URLEncode UI</name>
-    <url>http://maven.apache.org</url>
+    <url>https://github.com/wiztools/urlencode-ui</url>
+    
     <scm>
-        <connection>scm:svn:http://wiztools.googlecode.com/svn/urlencode-ui/trunk/</connection>
-        <developerConnection>scm:svn:https://wiztools.googlecode.com/svn/urlencode-ui/trunk/</developerConnection>
-        <url>http://code.google.com/p/wiztools/source/browse/</url>
+        <connection>scm:git:https://github.com/wiztools/urlencode-ui.git</connection>
+        <developerConnection>scm:git:https://github.com/wiztools/urlencode-ui.git</developerConnection>
+        <url>https://github.com/wiztools/urlencode-ui</url>
     </scm>
+    
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+    
     <build>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
                 <configuration>
                     <source>1.5</source>
                     <target>1.5</target>
@@ -27,19 +31,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
                 <configuration>
                     <archive>
                         <manifest>
                             <mainClass>org.wiztools.util.Main</mainClass>
                         </manifest>
                     </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <configuration>
-                    <tagBase>https://wiztools.googlecode.com/svn/urlencode-ui/tags</tagBase>
                 </configuration>
             </plugin>
         </plugins>
